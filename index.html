@@ -3,287 +3,343 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocab Master - Random Mode</title>
+    <title>Vocab Master Pro - Cloud & Voice</title>
     <style>
-        :root { --primary: #2563eb; --success: #16a34a; --danger: #dc2626; --bg: #f1f5f9; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 20px; }
-        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h1, h2 { text-align: center; color: #1e293b; margin-top: 0; }
-        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 16px; transition: 0.3s; }
-        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-        button { cursor: pointer; border: none; font-weight: bold; }
+        :root { --primary: #2563eb; --success: #16a34a; --danger: #dc2626; --bg: #f1f5f9; --warning: #f59e0b; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 10px; }
+        .container { width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        button { cursor: pointer; border: none; font-weight: bold; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
         .btn-primary { background: var(--primary); color: white; }
         .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger { background: var(--danger); color: white; padding: 8px; font-size: 14px; }
+        .btn-warning { background: var(--warning); color: white; padding: 8px; font-size: 14px; }
         .hidden { display: none; }
-        .auth-tabs { display: flex; background: #e2e8f0; border-radius: 10px; padding: 5px; margin-bottom: 20px; }
-        .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 7px; font-weight: bold; color: #64748b; }
-        .auth-tab.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .tabs { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
-        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #64748b; font-weight: 600; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; overflow-x: auto; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #64748b; font-weight: 600; white-space: nowrap; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
+
+        /* Vocab List Item */
+        .vocab-item { border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 10px; position: relative; background: #fff; }
+        .vocab-item b { font-size: 18px; color: var(--primary); }
+        .vocab-tag { font-size: 11px; background: #e2e8f0; padding: 2px 8px; border-radius: 20px; margin-left: 5px; color: #475569; }
+        .btn-speak { background: #dee2e6; width: auto; padding: 5px 10px; font-size: 18px; display: inline-block; margin-left: 10px; }
+        
+        .action-group { display: flex; gap: 5px; margin-top: 10px; }
+        .search-box { background: #f8fafc; border: 2px solid var(--primary); }
+        
+        /* Quiz Card */
         .quiz-card { background: #f8fafc; padding: 30px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0; }
-        .question-text { font-size: 32px; font-weight: bold; color: var(--primary); margin-bottom: 10px; }
-        .question-hint { font-size: 14px; color: #64748b; margin-bottom: 20px; font-style: italic; }
+        .question-text { font-size: 32px; font-weight: bold; color: var(--primary); }
         .feedback { font-weight: bold; margin: 15px 0; padding: 12px; border-radius: 8px; }
         .feedback.correct { background: #dcfce7; color: var(--success); }
         .feedback.wrong { background: #fee2e2; color: var(--danger); }
-        .stat-bar { font-size: 14px; color: #64748b; text-align: center; background: #f8fafc; padding: 10px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="auth-screen">
-        <h1>🚀 Vocab Master</h1>
-        <div class="auth-tabs">
-            <div class="auth-tab active" id="btn-login-tab" onclick="switchAuth('login')">Đăng nhập</div>
-            <div class="auth-tab" id="btn-reg-tab" onclick="switchAuth('reg')">Đăng ký</div>
-        </div>
-        <input type="text" id="auth-user" placeholder="Tên đăng nhập">
+    <div id="loader">Đang kết nối Cloud...</div>
+
+    <div id="auth-screen" class="hidden">
+        <h1>🚀 Vocab Master Pro</h1>
+        <input type="email" id="auth-email" placeholder="Email của bạn">
         <input type="password" id="auth-pass" placeholder="Mật khẩu">
-        <div id="login-area"><button class="btn-primary" onclick="handleAuth('login')">Vào học ngay</button></div>
-        <div id="reg-area" class="hidden"><button class="btn-success" onclick="handleAuth('reg')">Tạo tài khoản mới</button></div>
+        <button class="btn-primary" onclick="handleAuth('login')">Đăng nhập</button>
+        <button style="background:none; color:var(--primary); font-size: 14px;" onclick="handleAuth('reg')">Chưa có tài khoản? Đăng ký ngay</button>
     </div>
 
     <div id="main-app" class="hidden">
         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
-            <span id="user-display" style="font-weight: bold; color: var(--primary);"></span>
-            <button style="width: auto; padding: 6px 15px; margin:0; background:#94a3b8; color:white;" onclick="logout()">Đăng xuất</button>
+            <span id="user-display" style="font-weight: bold; color: var(--primary); font-size: 13px;"></span>
+            <button style="width: auto; padding: 5px 10px; margin:0; background:#94a3b8; color:white; font-size: 12px;" onclick="logout()">Thoát</button>
         </div>
+        
         <div class="tabs">
-            <div class="tab active" id="tab-add" onclick="showTab('add')">Thêm từ mới</div>
-            <div class="tab" id="tab-quiz" onclick="showTab('quiz')">Kiểm tra</div>
+            <div class="tab active" id="t-add" onclick="showTab('add')">Thêm từ</div>
+            <div class="tab" id="t-manage" onclick="showTab('manage')">Quản lý kho</div>
+            <div class="tab" id="t-quiz" onclick="showTab('quiz')">Kiểm tra</div>
         </div>
 
         <div id="panel-add">
-            <input type="text" id="eng-word" placeholder="Tiếng Anh (ví dụ: Persistent)">
-            <input type="text" id="vie-word" placeholder="Tiếng Việt (ví dụ: Kiên trì)">
+            <input type="text" id="eng-word" placeholder="Tiếng Anh (vd: Sustainable)">
+            <input type="text" id="vie-word" placeholder="Nghĩa Tiếng Việt">
+            <input type="text" id="cat-word" placeholder="Phân loại (vd: IELTS, Noun, Business...)">
             <button class="btn-primary" onclick="addVocab()">➕ Lưu từ vựng</button>
-            <div id="stat-info" class="stat-bar" style="margin-top: 15px;"></div>
+        </div>
+
+        <div id="panel-manage" class="hidden">
+            <input type="text" id="search-input" class="search-box" placeholder="🔍 Tìm kiếm từ hoặc nghĩa..." oninput="renderVocabList()">
+            <div id="vocab-list-container" style="margin-top: 15px; max-height: 400px; overflow-y: auto;">
+                </div>
         </div>
 
         <div id="panel-quiz" class="hidden">
             <div id="quiz-setup">
-                <h2>🧠 Kiểm tra ngẫu nhiên</h2>
-                <p style="text-align: center; font-size: 14px; color: #64748b;">Hệ thống sẽ tự trộn câu hỏi Anh-Việt và Việt-Anh</p>
-                <label style="font-size: 14px; font-weight: bold;">Số lượng từ:</label>
                 <select id="quiz-count">
-                    <option value="5">5 từ</option>
-                    <option value="10">10 từ</option>
-                    <option value="20">20 từ</option>
-                    <option value="999">Tất cả từ còn lại</option>
+                    <option value="5">Kiểm tra 5 từ</option>
+                    <option value="10">Kiểm tra 10 từ</option>
+                    <option value="999">Kiểm tra tất cả</option>
                 </select>
-                <button class="btn-success" onclick="startQuiz()">🚀 Bắt đầu ngay</button>
+                <button class="btn-success" onclick="startQuiz()">🚀 Bắt đầu Quiz</button>
             </div>
-
             <div id="quiz-play" class="hidden">
                 <div class="quiz-card">
-                    <div id="quiz-progress" style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;"></div>
-                    <div id="display-hint" class="question-hint"></div>
-                    <div class="question-text" id="display-question"></div>
-                    
-                    <input type="text" id="user-answer" placeholder="Nhập đáp án vào đây..." autocomplete="off">
-                    <div id="feedback-area" class="hidden"></div>
-
-                    <button id="btn-check" class="btn-primary" onclick="checkAnswer()">Kiểm tra</button>
-                    
-                    <div id="next-actions" class="hidden">
-                        <p style="font-size: 14px; margin: 15px 0 10px;">Bạn đã thuộc từ này chưa?</p>
+                    <div id="q-hint" style="font-style:italic; font-size:12px; color:#94a3b8;"></div>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <div class="question-text" id="q-text"></div>
+                        <button id="btn-quiz-speak" class="btn-speak" style="margin:0">🔊</button>
+                    </div>
+                    <input type="text" id="u-ans" placeholder="Nhập đáp án..." autocomplete="off">
+                    <div id="feedback" class="hidden"></div>
+                    <button id="btn-check" class="btn-primary" onclick="checkAns()">Kiểm tra</button>
+                    <div id="q-actions" class="hidden">
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn-success" onclick="handleResult(true)">✅ Đã thuộc (Bỏ qua)</button>
-                            <button class="btn-danger" onclick="handleResult(false)">❌ Chưa thuộc (Lặp lại)</button>
+                            <button class="btn-success" onclick="updateMastered(true)">✅ Thuộc</button>
+                            <button class="btn-danger" onclick="updateMastered(false)">❌ Chưa thuộc</button>
                         </div>
                     </div>
                 </div>
             </div>
-            <button id="btn-reset" class="hidden btn-danger" onclick="resetCycle()">Đã hết từ! Reset để học lại từ đầu</button>
+            <button id="btn-reset" class="hidden btn-danger" onclick="resetAll()">Reset toàn bộ vòng lặp</button>
         </div>
     </div>
 </div>
 
-<script>
-    let currentUser = null;
-    let vocabData = [];
-    let currentQuizList = [];
-    let currentIdx = 0;
-    let isCurrentEngToVie = true; // Biến lưu hướng dịch của câu hiện tại
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-    // --- HỆ THỐNG XÁC THỰC ---
-    function switchAuth(mode) {
-        document.getElementById('btn-login-tab').classList.toggle('active', mode === 'login');
-        document.getElementById('btn-reg-tab').classList.toggle('active', mode === 'reg');
-        document.getElementById('login-area').classList.toggle('hidden', mode !== 'login');
-        document.getElementById('reg-area').classList.toggle('hidden', mode !== 'reg');
-    }
+    const firebaseConfig = {
+        apiKey: "AIzaSyBZhMJE0_FlUBrsMd9xWDyCPS09jkwdwRw",
+        authDomain: "english-2aa79.firebaseapp.com",
+        projectId: "english-2aa79",
+        storageBucket: "english-2aa79.firebasestorage.app",
+        messagingSenderId: "500522490248",
+        appId: "1:500522490248:web:ad47226e2695be89bac23d"
+    };
 
-    function handleAuth(type) {
-        const u = document.getElementById('auth-user').value.trim();
-        const p = document.getElementById('auth-pass').value.trim();
-        if(!u || !p) return alert("Vui lòng nhập đầy đủ!");
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-        let users = JSON.parse(localStorage.getItem('vocab_users') || '[]');
+    let user = null;
+    let vocab = [];
+    let currentQuiz = [];
+    let qIdx = 0;
+    let isEng = true;
 
-        if(type === 'reg') {
-            if(users.some(user => user.u === u)) return alert("Tên này đã tồn tại!");
-            users.push({ u, p });
-            localStorage.setItem('vocab_users', JSON.stringify(users));
-            alert("Đăng ký thành công!");
-            switchAuth('login');
-        } else {
-            const user = users.find(user => user.u === u && user.p === p);
-            if(user) {
-                currentUser = u;
-                loadData();
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                document.getElementById('user-display').innerText = "👤 " + u;
-                updateStats();
-            } else { alert("Sai thông tin đăng nhập!"); }
-        }
-    }
+    // --- PHÁT ÂM (TTS) ---
+    window.speak = (text) => {
+        window.speechSynthesis.cancel(); // Dừng các âm thanh đang đọc dở
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'en-US';
+        msg.rate = 0.9; // Tốc độ đọc vừa phải
+        window.speechSynthesis.speak(msg);
+    };
 
-    function logout() { location.reload(); }
-
-    // --- QUẢN LÝ DỮ LIỆU ---
-    function loadData() {
-        const saved = localStorage.getItem('data_' + currentUser);
-        vocabData = saved ? JSON.parse(saved) : [];
-    }
-
-    function saveData() {
-        localStorage.setItem('data_' + currentUser, JSON.stringify(vocabData));
-        updateStats();
-    }
-
-    function addVocab() {
-        const eng = document.getElementById('eng-word').value.trim();
-        const vie = document.getElementById('vie-word').value.trim();
-        if(!eng || !vie) return alert("Vui lòng điền đủ!");
-
-        vocabData.push({ eng, vie, mastered: false });
-        saveData();
-        document.getElementById('eng-word').value = '';
-        document.getElementById('vie-word').value = '';
-        document.getElementById('eng-word').focus();
-    }
-
-    function updateStats() {
-        const total = vocabData.length;
-        const mastered = vocabData.filter(v => v.mastered).length;
-        document.getElementById('stat-info').innerText = `📊 Kho: ${total} | Đã thuộc: ${mastered} | Còn lại: ${total - mastered}`;
-    }
-
-    function showTab(tab) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById('panel-add').classList.add('hidden');
-        document.getElementById('panel-quiz').classList.add('hidden');
-        if(tab === 'add') {
-            document.getElementById('tab-add').classList.add('active');
-            document.getElementById('panel-add').classList.remove('hidden');
-        } else {
-            document.getElementById('tab-quiz').classList.add('active');
-            document.getElementById('panel-quiz').classList.remove('hidden');
-            checkRemaining();
-        }
-    }
-
-    // --- LOGIC KIỂM TRA (RANDOM 2 CHIỀU) ---
-    function checkRemaining() {
-        const remaining = vocabData.filter(v => !v.mastered);
-        if(remaining.length === 0 && vocabData.length > 0) {
-            document.getElementById('quiz-setup').classList.add('hidden');
-            document.getElementById('btn-reset').classList.remove('hidden');
-        } else {
-            document.getElementById('quiz-setup').classList.remove('hidden');
-            document.getElementById('btn-reset').classList.add('hidden');
-            document.getElementById('quiz-play').classList.add('hidden');
-        }
-    }
-
-    function startQuiz() {
-        const remaining = vocabData.filter(v => !v.mastered);
-        if(remaining.length === 0) return alert("Chưa có từ mới!");
-
-        const count = parseInt(document.getElementById('quiz-count').value);
-        currentQuizList = remaining.sort(() => 0.5 - Math.random()).slice(0, count);
-        currentIdx = 0;
+    // --- AUTH ---
+    window.handleAuth = async (type) => {
+        const email = document.getElementById('auth-email').value.trim(); // Thêm .trim() vào đây
+        const pass = document.getElementById('auth-pass').value.trim();  // Thêm .trim() vào đây
         
-        document.getElementById('quiz-setup').classList.add('hidden');
-        document.getElementById('quiz-play').classList.remove('hidden');
-        showQuestion();
-    }
-
-    function showQuestion() {
-        if(currentIdx >= currentQuizList.length) {
-            alert("Xong lượt này!");
-            checkRemaining();
+        if (!email.includes('@')) {
+            alert("Vui lòng nhập đúng định dạng email (ví dụ: name@gmail.com)");
             return;
         }
-        const curr = currentQuizList[currentIdx];
         
-        // NGẪU NHIÊN CHỌN HƯỚNG DỊCH (ANH->VIỆT HOẶC VIỆT->ANH)
-        isCurrentEngToVie = Math.random() < 0.5;
-        
-        document.getElementById('quiz-progress').innerText = `CÂU ${currentIdx + 1} / ${currentQuizList.length}`;
-        document.getElementById('display-hint').innerText = isCurrentEngToVie ? "Hãy dịch sang tiếng Việt:" : "Hãy dịch sang tiếng Anh:";
-        document.getElementById('display-question').innerText = isCurrentEngToVie ? curr.eng : curr.vie;
-        
-        document.getElementById('user-answer').value = '';
-        document.getElementById('user-answer').disabled = false;
-        document.getElementById('user-answer').focus();
-        document.getElementById('feedback-area').classList.add('hidden');
-        document.getElementById('btn-check').classList.remove('hidden');
-        document.getElementById('next-actions').classList.add('hidden');
-    }
+        try {
+            if(type === 'login') await signInWithEmailAndPassword(auth, email, pass);
+            else await createUserWithEmailAndPassword(auth, email, pass);
+        } catch (e) { 
+            alert("Lỗi Firebase: " + e.message); 
+        }
+    };
 
-    function checkAnswer() {
-        const userAns = document.getElementById('user-answer').value.trim().toLowerCase();
-        const curr = currentQuizList[currentIdx];
-        const correctAns = isCurrentEngToVie ? curr.vie.toLowerCase() : curr.eng.toLowerCase();
-        
-        const feedback = document.getElementById('feedback-area');
-        feedback.classList.remove('hidden');
-        
-        if(userAns === correctAns) {
-            feedback.innerText = "CHÍNH XÁC! 🌟";
-            feedback.className = "feedback correct";
+    window.logout = () => signOut(auth);
+
+    onAuthStateChanged(auth, async (u) => {
+        document.getElementById('loader').classList.add('hidden');
+        if (u) {
+            user = u;
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('user-display').innerText = u.email;
+            await loadVocab();
         } else {
-            const displayAns = isCurrentEngToVie ? curr.vie : curr.eng;
-            feedback.innerText = `SAI RỒI! Đáp án: ${displayAns}`;
-            feedback.className = "feedback wrong";
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+        }
+    });
+
+    // --- QUẢN LÝ TỪ VỰNG ---
+    async function loadVocab() {
+        const q = query(collection(db, "vocab"), where("uid", "==", user.uid));
+        const snap = await getDocs(q);
+        vocab = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderVocabList();
+    }
+
+    window.addVocab = async () => {
+        const eng = document.getElementById('eng-word').value.trim();
+        const vie = document.getElementById('vie-word').value.trim();
+        const cat = document.getElementById('cat-word').value.trim() || "Chung";
+        if(!eng || !vie) return alert("Vui lòng nhập đủ từ và nghĩa!");
+        
+        await addDoc(collection(db, "vocab"), { 
+            uid: user.uid, eng, vie, category: cat, mastered: false, createdAt: Date.now() 
+        });
+        
+        document.getElementById('eng-word').value = '';
+        document.getElementById('vie-word').value = '';
+        await loadVocab();
+        alert("Đã lưu!");
+    };
+
+    window.deleteVocab = async (id) => {
+        if(confirm("Bạn có chắc chắn muốn xoá từ này?")) {
+            await deleteDoc(doc(db, "vocab", id));
+            await loadVocab();
+        }
+    };
+
+    window.editVocab = async (id, oldVie) => {
+        const newVie = prompt("Sửa nghĩa Tiếng Việt:", oldVie);
+        if(newVie && newVie !== oldVie) {
+            await updateDoc(doc(db, "vocab", id), { vie: newVie });
+            await loadVocab();
+        }
+    };
+
+    window.renderVocabList = () => {
+        const search = document.getElementById('search-input').value.toLowerCase();
+        const container = document.getElementById('vocab-list-container');
+        container.innerHTML = '';
+
+        const filtered = vocab.filter(v => 
+            v.eng.toLowerCase().includes(search) || 
+            v.vie.toLowerCase().includes(search) ||
+            (v.category && v.category.toLowerCase().includes(search))
+        ).sort((a,b) => b.createdAt - a.createdAt);
+
+        filtered.forEach(v => {
+            const div = document.createElement('div');
+            div.className = 'vocab-item';
+            div.innerHTML = `
+                <div>
+                    <b>${v.eng}</b> <span class="vocab-tag">${v.category || 'Chung'}</span>
+                    <button class="btn-speak" onclick="speak('${v.eng}')">🔊</button>
+                    <br><small>${v.vie}</small>
+                </div>
+                <div class="action-group">
+                    <button class="btn-warning" onclick="editVocab('${v.id}', '${v.vie}')">Sửa</button>
+                    <button class="btn-danger" onclick="deleteVocab('${v.id}')">Xoá</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    };
+
+    // --- TABS & QUIZ ---
+    window.showTab = (t) => {
+        const panels = ['panel-add', 'panel-manage', 'panel-quiz'];
+        const tabs = ['t-add', 't-manage', 't-quiz'];
+        panels.forEach(p => document.getElementById(p).classList.add('hidden'));
+        tabs.forEach(tab => document.getElementById(tab).classList.remove('active'));
+        
+        document.getElementById('panel-' + t).classList.remove('hidden');
+        document.getElementById('t-' + t).classList.add('active');
+        if(t === 'quiz') checkRemaining();
+    };
+
+    function checkRemaining() {
+        const rem = vocab.filter(v => !v.mastered);
+        document.getElementById('quiz-setup').classList.toggle('hidden', rem.length === 0);
+        document.getElementById('btn-reset').classList.toggle('hidden', rem.length > 0 || vocab.length === 0);
+    }
+
+    window.startQuiz = () => {
+        const rem = vocab.filter(v => !v.mastered);
+        const count = parseInt(document.getElementById('quiz-count').value);
+        currentQuiz = rem.sort(() => 0.5 - Math.random()).slice(0, count);
+        qIdx = 0;
+        document.getElementById('quiz-setup').classList.add('hidden');
+        document.getElementById('quiz-play').classList.remove('hidden');
+        showQ();
+    };
+
+    function showQ() {
+        if(qIdx >= currentQuiz.length) { 
+            alert("Tuyệt vời! Bạn đã hoàn thành lượt kiểm tra."); 
+            return showTab('quiz'); 
+        }
+        const curr = currentQuiz[qIdx];
+        isEng = Math.random() < 0.5;
+        document.getElementById('q-hint').innerText = isEng ? "Dịch sang Tiếng Việt:" : "Dịch sang Tiếng Anh:";
+        document.getElementById('q-text').innerText = isEng ? curr.eng : curr.vie;
+        
+        // Nút đọc trong Quiz
+        const speakBtn = document.getElementById('btn-quiz-speak');
+        if(isEng) {
+            speakBtn.classList.remove('hidden');
+            speakBtn.onclick = () => speak(curr.eng);
+        } else {
+            speakBtn.classList.add('hidden');
         }
 
-        document.getElementById('user-answer').disabled = true;
+        document.getElementById('u-ans').value = '';
+        document.getElementById('feedback').classList.add('hidden');
+        document.getElementById('q-actions').classList.add('hidden');
+        document.getElementById('btn-check').classList.remove('hidden');
+        document.getElementById('u-ans').focus();
+    }
+
+    window.checkAns = () => {
+        const ans = document.getElementById('u-ans').value.trim().toLowerCase();
+        const curr = currentQuiz[qIdx];
+        const correct = isEng ? curr.vie.toLowerCase() : curr.eng.toLowerCase();
+        const fb = document.getElementById('feedback');
+        fb.classList.remove('hidden');
+        
+        if(ans === correct) {
+            fb.innerText = "CHÍNH XÁC! ✨";
+            fb.className = "feedback correct";
+        } else {
+            fb.innerText = "SAI RỒI! Đáp án đúng: " + (isEng ? curr.vie : curr.eng);
+            fb.className = "feedback wrong";
+        }
         document.getElementById('btn-check').classList.add('hidden');
-        document.getElementById('next-actions').classList.remove('hidden');
-    }
+        document.getElementById('q-actions').classList.remove('hidden');
+    };
 
-    function handleResult(isMastered) {
-        if(isMastered) {
-            const word = currentQuizList[currentIdx];
-            const realIdx = vocabData.findIndex(v => v.eng === word.eng && v.vie === word.vie);
-            if(realIdx > -1) vocabData[realIdx].mastered = true;
-            saveData();
+    window.updateMastered = async (m) => {
+        if(m) {
+            const vDoc = doc(db, "vocab", currentQuiz[qIdx].id);
+            await updateDoc(vDoc, { mastered: true });
+            await loadVocab();
         }
-        currentIdx++;
-        showQuestion();
-    }
+        qIdx++; showQ();
+    };
 
-    function resetCycle() {
-        if(confirm("Học lại từ đầu?")) {
-            vocabData.forEach(v => v.mastered = false);
-            saveData();
-            checkRemaining();
+    window.resetAll = async () => {
+        if(confirm("Bạn muốn reset toàn bộ kho từ để học lại từ đầu?")) {
+            for(let v of vocab) {
+                await updateDoc(doc(db, "vocab", v.id), { mastered: false });
+            }
+            await loadVocab(); checkRemaining();
         }
-    }
-
-    document.getElementById('user-answer').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter' && !document.getElementById('btn-check').classList.contains('hidden')) {
-            checkAnswer();
+    };
+    
+    // Hỗ trợ phím Enter khi làm Quiz
+    document.getElementById('u-ans').addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') {
+            if(!document.getElementById('btn-check').classList.contains('hidden')) checkAns();
         }
     });
 </script>
-
 </body>
 </html>
