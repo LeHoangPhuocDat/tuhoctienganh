@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocab Master Pro - Cloud & Voice</title>
+    <title>Anh Đạt English</title>
     <style>
         :root { --primary: #2563eb; --success: #16a34a; --danger: #dc2626; --bg: #f1f5f9; --warning: #f59e0b; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 10px; }
@@ -273,16 +273,36 @@
     };
 
     function showQ() {
+        // 1. Kiểm tra nếu hết câu hỏi
         if(qIdx >= currentQuiz.length) { 
             alert("Tuyệt vời! Bạn đã hoàn thành lượt kiểm tra."); 
             return showTab('quiz'); 
         }
+
+        // 2. Reset TOÀN BỘ giao diện về trạng thái ban đầu
+        const feedback = document.getElementById('feedback');
+        const qActions = document.getElementById('q-actions');
+        const btnCheck = document.getElementById('btn-check');
+        const uAns = document.getElementById('u-ans');
+
+        // Ẩn kết quả và nút thuộc/chưa thuộc, hiện lại nút Kiểm tra
+        feedback.classList.add('hidden');
+        feedback.innerText = ""; // Xóa chữ cũ
+        qActions.classList.add('hidden');
+        btnCheck.classList.remove('hidden');
+
+        // Xóa trắng ô nhập liệu và cho phép nhập lại
+        uAns.value = "";
+        uAns.disabled = false;
+
+        // 3. Nạp dữ liệu câu hỏi mới
         const curr = currentQuiz[qIdx];
         isEng = Math.random() < 0.5;
+        
         document.getElementById('q-hint').innerText = isEng ? "Dịch sang Tiếng Việt:" : "Dịch sang Tiếng Anh:";
         document.getElementById('q-text').innerText = isEng ? curr.eng : curr.vie;
         
-        // Nút đọc trong Quiz
+        // Xử lý nút loa
         const speakBtn = document.getElementById('btn-quiz-speak');
         if(isEng) {
             speakBtn.classList.remove('hidden');
@@ -291,12 +311,36 @@
             speakBtn.classList.add('hidden');
         }
 
-        document.getElementById('u-ans').value = '';
-        document.getElementById('feedback').classList.add('hidden');
-        document.getElementById('q-actions').classList.add('hidden');
-        document.getElementById('btn-check').classList.remove('hidden');
-        document.getElementById('u-ans').focus();
+        // Tự động nhảy vào ô nhập liệu để gõ luôn
+        setTimeout(() => uAns.focus(), 100);
     }
+
+    window.checkAns = () => {
+        const uAns = document.getElementById('u-ans');
+        const ans = uAns.value.trim().toLowerCase();
+        
+        // Nếu chưa nhập gì thì không làm gì cả
+        if (ans === "") return;
+
+        const curr = currentQuiz[qIdx];
+        const correct = isEng ? curr.vie.toLowerCase() : curr.eng.toLowerCase();
+        const fb = document.getElementById('feedback');
+        
+        fb.classList.remove('hidden');
+        
+        if(ans === correct) {
+            fb.innerText = "CHÍNH XÁC! ✨";
+            fb.className = "feedback correct";
+        } else {
+            fb.innerText = "SAI RỒI! Đáp án đúng: " + (isEng ? curr.vie : curr.eng);
+            fb.className = "feedback wrong";
+        }
+
+        // Khóa ô nhập và đổi nút
+        uAns.disabled = true;
+        document.getElementById('btn-check').classList.add('hidden');
+        document.getElementById('q-actions').classList.remove('hidden');
+    };
 
     window.checkAns = () => {
         const ans = document.getElementById('u-ans').value.trim().toLowerCase();
