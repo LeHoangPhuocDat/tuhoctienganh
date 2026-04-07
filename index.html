@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anh Đạt English</title>
+    <title>Anh Đạt English Pro</title>
     <style>
         :root { --primary: #2563eb; --success: #16a34a; --danger: #dc2626; --bg: #f1f5f9; --warning: #f59e0b; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 10px; }
-        .container { width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .container { width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; }
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
         button { cursor: pointer; border: none; font-weight: bold; transition: 0.2s; }
         button:active { transform: scale(0.98); }
         .btn-primary { background: var(--primary); color: white; }
         .btn-success { background: var(--success); color: white; }
-        .btn-danger { background: var(--danger); color: white; padding: 8px; font-size: 14px; }
-        .btn-warning { background: var(--warning); color: white; padding: 8px; font-size: 14px; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
         .hidden { display: none !important; }
         
         /* Tabs */
@@ -22,107 +22,117 @@
         .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #64748b; font-weight: 600; white-space: nowrap; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
 
-        /* Vocab List Item */
-        .vocab-item { border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 10px; position: relative; background: #fff; }
-        .vocab-item b { font-size: 18px; color: var(--primary); }
+        /* Vocab List */
+        .vocab-item { border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 10px; background: #fff; }
         .vocab-tag { font-size: 11px; background: #e2e8f0; padding: 2px 8px; border-radius: 20px; margin-left: 5px; color: #475569; }
-        .btn-speak { background: #dee2e6; width: auto; padding: 5px 10px; font-size: 18px; display: inline-block; margin-left: 10px; }
+        .btn-speak { background: #dee2e6; width: auto; padding: 5px 10px; font-size: 18px; display: inline-block; margin-left: 10px; border-radius: 8px; }
         
-        .action-group { display: flex; gap: 5px; margin-top: 10px; }
-        .search-box { background: #f8fafc; border: 2px solid var(--primary); }
-        
-        /* Quiz Card */
-        .quiz-card { background: #f8fafc; padding: 30px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0; }
-        .question-text { font-size: 32px; font-weight: bold; color: var(--primary); }
+        /* Quiz */
+        .quiz-card { background: #f8fafc; padding: 25px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0; }
+        .question-text { font-size: 32px; font-weight: bold; color: var(--primary); margin: 10px 0; }
         .feedback { font-weight: bold; margin: 15px 0; padding: 12px; border-radius: 8px; }
         .feedback.correct { background: #dcfce7; color: var(--success); }
         .feedback.wrong { background: #fee2e2; color: var(--danger); }
+        
+        .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .choice-btn { background: white; border: 2px solid #e2e8f0; color: #333; padding: 15px; font-size: 14px; border-radius: 10px; }
 
-        /* Auth */
+        /* Auth Overlay */
         .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-        .auth-card { width: 100%; max-width: 400px; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .auth-card { width: 100%; max-width: 400px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="loader" style="text-align: center; padding: 50px;">Đang kết nối Cloud...</div>
+    <div id="loader" style="text-align:center; padding:50px;">Đang kết nối dữ liệu...</div>
 
     <div id="auth-screen" class="hidden">
         <div id="login-box" class="auth-card">
-            <h1 style="text-align: center;">🔐 Đăng nhập</h1>
+            <h1 style="text-align:center;">🔐 Đăng nhập</h1>
             <input type="email" id="login-email" placeholder="Email của bạn">
             <input type="password" id="login-pass" placeholder="Mật khẩu">
             <button class="btn-primary" onclick="handleAuth('login')">Vào học ngay</button>
-            <p style="text-align: center; font-size: 14px;">
-                Chưa có tài khoản? <a href="#" onclick="switchAuth('reg')" style="color: var(--primary); font-weight: bold;">Đăng ký tại đây</a>
-            </p>
+            <p style="text-align:center; font-size:14px;">Chưa có tài khoản? <a href="#" onclick="switchAuth('reg')" style="color:var(--primary); font-weight:bold;">Đăng ký tại đây</a></p>
         </div>
 
         <div id="reg-box" class="auth-overlay hidden">
             <div class="auth-card">
-                <h1 style="text-align: center;">📝 Tạo tài khoản mới</h1>
-                <p style="text-align: center; color: #64748b; font-size: 14px;">Tham gia cộng đồng học tiếng Anh Cloud</p>
-                <input type="email" id="reg-email" placeholder="Nhập Email của bạn">
-                <input type="password" id="reg-pass" placeholder="Tạo mật khẩu (ít nhất 6 ký tự)">
-                <button class="btn-success" onclick="handleAuth('reg')">Hoàn tất đăng ký</button>
-                <button style="background: none; color: #94a3b8; font-size: 14px; width: 100%;" onclick="switchAuth('login')">← Quay lại Đăng nhập</button>
+                <h1 style="text-align:center;">📝 Đăng ký</h1>
+                <input type="email" id="reg-email" placeholder="Nhập Email">
+                <input type="password" id="reg-pass" placeholder="Mật khẩu (ít nhất 6 ký tự)">
+                <button class="btn-success" onclick="handleAuth('reg')">Tạo tài khoản</button>
+                <button style="background:none; color:#94a3b8; width:100%;" onclick="switchAuth('login')">← Quay lại Đăng nhập</button>
             </div>
         </div>
     </div>
 
     <div id="main-app" class="hidden">
         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
-            <span id="user-display" style="font-weight: bold; color: var(--primary); font-size: 13px;"></span>
-            <button style="width: auto; padding: 5px 10px; margin:0; background:#94a3b8; color:white; font-size: 12px;" onclick="logout()">Thoát</button>
+            <span id="user-display" style="font-weight:bold; color:var(--primary); font-size:12px;"></span>
+            <button style="width:auto; padding:5px 10px; margin:0; background:#94a3b8; color:white; font-size:12px;" onclick="logout()">Thoát</button>
         </div>
         
         <div class="tabs">
             <div class="tab active" id="t-add" onclick="showTab('add')">Thêm từ</div>
-            <div class="tab" id="t-manage" onclick="showTab('manage')">Quản lý kho</div>
+            <div class="tab" id="t-manage" onclick="showTab('manage')">Quản lý</div>
             <div class="tab" id="t-quiz" onclick="showTab('quiz')">Kiểm tra</div>
         </div>
 
         <div id="panel-add">
-            <input type="text" id="eng-word" placeholder="Tiếng Anh (vd: Sustainable)">
+            <input type="text" id="eng-word" placeholder="Tiếng Anh (vd: Challenge)">
             <input type="text" id="vie-word" placeholder="Nghĩa Tiếng Việt">
-            <input type="text" id="cat-word" placeholder="Phân loại (vd: IELTS, Business...)">
-            <button class="btn-primary" onclick="addVocab()">➕ Lưu từ vựng</button>
+            <input type="text" id="cat-word" placeholder="Phân loại (vd: IELTS, Giao tiếp...)">
+            <button class="btn-primary" onclick="addVocab()">➕ Lưu vào Cloud</button>
         </div>
 
         <div id="panel-manage" class="hidden">
-            <input type="text" id="search-input" class="search-box" placeholder="🔍 Tìm từ hoặc nghĩa..." oninput="renderVocabList()">
-            <div id="vocab-list-container" style="margin-top: 15px; max-height: 400px; overflow-y: auto;"></div>
+            <input type="text" id="search-input" placeholder="🔍 Tìm kiếm từ hoặc phân loại..." oninput="renderVocabList()">
+            <div id="vocab-list-container" style="margin-top:10px; max-height:400px; overflow-y:auto;"></div>
         </div>
 
         <div id="panel-quiz" class="hidden">
             <div id="quiz-setup">
-                <select id="quiz-count">
-                    <option value="5">Kiểm tra 5 từ</option>
-                    <option value="10">Kiểm tra 10 từ</option>
-                    <option value="999">Kiểm tra tất cả</option>
+                <label>Kiểu kiểm tra:</label>
+                <select id="quiz-mode-select">
+                    <option value="mix">Trộn ngẫu nhiên (Khuyên dùng)</option>
+                    <option value="write">Gõ đáp án</option>
+                    <option value="choice">Trắc nghiệm (4 lựa chọn)</option>
+                    <option value="listen">Nghe & Viết (Chính tả)</option>
                 </select>
-                <button class="btn-success" onclick="startQuiz()">🚀 Bắt đầu Quiz</button>
+                <label>Số lượng từ:</label>
+                <select id="quiz-count">
+                    <option value="5">5 từ</option><option value="10">10 từ</option><option value="999">Tất cả</option>
+                </select>
+                <button class="btn-success" onclick="startQuiz()">🚀 Bắt đầu</button>
             </div>
+
             <div id="quiz-play" class="hidden">
                 <div class="quiz-card">
                     <div id="q-hint" style="font-style:italic; font-size:12px; color:#94a3b8;"></div>
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
                         <div class="question-text" id="q-text"></div>
                         <button id="btn-quiz-speak" class="btn-speak" style="margin:0">🔊</button>
                     </div>
-                    <input type="text" id="u-ans" placeholder="Nhập đáp án..." autocomplete="off">
+
+                    <div id="quiz-input-section">
+                        <input type="text" id="u-ans" placeholder="Nhập đáp án..." autocomplete="off">
+                    </div>
+
+                    <div id="quiz-choice-section" class="choice-grid hidden"></div>
+
                     <div id="feedback" class="hidden"></div>
                     <button id="btn-check" class="btn-primary" onclick="checkAns()">Kiểm tra</button>
+
                     <div id="q-actions" class="hidden">
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display:flex; gap:10px;">
                             <button class="btn-success" onclick="updateMastered(true)">✅ Thuộc</button>
                             <button class="btn-danger" onclick="updateMastered(false)">❌ Chưa thuộc</button>
                         </div>
                     </div>
                 </div>
             </div>
-            <button id="btn-reset" class="hidden btn-danger" onclick="resetAll()">Reset vòng lặp</button>
+            <button id="btn-reset" class="hidden btn-danger" onclick="resetAll()">Làm mới kho từ đã thuộc</button>
         </div>
     </div>
 </div>
@@ -130,7 +140,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBZhMJE0_FlUBrsMd9xWDyCPS09jkwdwRw",
@@ -150,34 +160,24 @@
     let currentQuiz = [];
     let qIdx = 0;
     let isEng = true;
+    let currentQMode = 'write';
+    let correctAnsText = "";
 
-    // --- PHÁT ÂM ---
     window.speak = (text) => {
-        if (!window.speechSynthesis) return;
         window.speechSynthesis.cancel();
         const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'en-US';
-        msg.rate = 0.9;
+        msg.lang = 'en-US'; msg.rate = 0.9;
         window.speechSynthesis.speak(msg);
-        let r = setInterval(() => {
-            if (!window.speechSynthesis.speaking) clearInterval(r);
-            else window.speechSynthesis.resume();
-        }, 10000);
     };
 
-    // --- AUTH ---
-    window.switchAuth = (mode) => {
-        document.getElementById('reg-box').classList.toggle('hidden', mode !== 'reg');
-    };
+    window.switchAuth = (m) => document.getElementById('reg-box').classList.toggle('hidden', m !== 'reg');
 
     window.handleAuth = async (type) => {
         const email = type === 'login' ? document.getElementById('login-email').value.trim() : document.getElementById('reg-email').value.trim();
         const pass = type === 'login' ? document.getElementById('login-pass').value.trim() : document.getElementById('reg-pass').value.trim();
-        if (!email.includes('@')) return alert("Email không hợp lệ!");
-        if (pass.length < 6) return alert("Mật khẩu ít nhất 6 ký tự!");
         try {
             if(type === 'login') await signInWithEmailAndPassword(auth, email, pass);
-            else { await createUserWithEmailAndPassword(auth, email, pass); alert("Đăng ký thành công!"); }
+            else { await createUserWithEmailAndPassword(auth, email, pass); alert("Đăng ký thành công!"); switchAuth('login'); }
         } catch (e) { alert("Lỗi: " + e.message); }
     };
 
@@ -197,7 +197,6 @@
         }
     });
 
-    // --- DỮ LIỆU ---
     async function loadVocab() {
         const q = query(collection(db, "vocab"), where("uid", "==", user.uid));
         const snap = await getDocs(q);
@@ -209,38 +208,32 @@
         const eng = document.getElementById('eng-word').value.trim();
         const vie = document.getElementById('vie-word').value.trim();
         const cat = document.getElementById('cat-word').value.trim() || "Chung";
-        if(!eng || !vie) return alert("Vui lòng nhập đủ!");
+        if(!eng || !vie) return alert("Thiếu thông tin!");
         await addDoc(collection(db, "vocab"), { uid: user.uid, eng, vie, category: cat, mastered: false, createdAt: Date.now() });
         document.getElementById('eng-word').value = ''; document.getElementById('vie-word').value = '';
         await loadVocab(); alert("Đã lưu!");
     };
 
-    window.deleteVocab = async (id) => { if(confirm("Xoá từ này?")) { await deleteDoc(doc(db, "vocab", id)); await loadVocab(); } };
-
-    window.editVocab = async (id, oldVie) => {
-        const newVie = prompt("Sửa nghĩa:", oldVie);
-        if(newVie && newVie !== oldVie) { await updateDoc(doc(db, "vocab", id), { vie: newVie }); await loadVocab(); }
-    };
-
     window.renderVocabList = () => {
-        const search = document.getElementById('search-input').value.toLowerCase();
+        const s = document.getElementById('search-input').value.toLowerCase();
         const container = document.getElementById('vocab-list-container');
         container.innerHTML = '';
-        vocab.filter(v => v.eng.toLowerCase().includes(search) || v.vie.toLowerCase().includes(search))
+        vocab.filter(v => v.eng.toLowerCase().includes(s) || v.vie.toLowerCase().includes(s) || v.category.toLowerCase().includes(s))
              .forEach(v => {
-                const div = document.createElement('div'); div.className = 'vocab-item';
-                div.innerHTML = `<div><b>${v.eng}</b> <span class="vocab-tag">${v.category}</span><button class="btn-speak" onclick="speak('${v.eng}')">🔊</button><br><small>${v.vie}</small></div>
-                                 <div class="action-group"><button class="btn-warning" onclick="editVocab('${v.id}', '${v.vie}')">Sửa</button><button class="btn-danger" onclick="deleteVocab('${v.id}')">Xoá</button></div>`;
-                container.appendChild(div);
+                const d = document.createElement('div'); d.className = 'vocab-item';
+                d.innerHTML = `<div><b>${v.eng}</b> <small>(${v.category})</small><button class="btn-speak" onclick="speak('${v.eng}')">🔊</button><br>${v.vie}</div>
+                <div style="margin-top:10px;"><button class="btn-warning" style="width:auto;padding:5px 15px;" onclick="editV('${v.id}','${v.vie}')">Sửa</button>
+                <button class="btn-danger" style="width:auto;padding:5px 15px;" onclick="delV('${v.id}')">Xoá</button></div>`;
+                container.appendChild(d);
              });
     };
 
-    // --- QUIZ ---
+    window.delV = async (id) => { if(confirm("Xoá từ?")) { await deleteDoc(doc(db,"vocab",id)); loadVocab(); } };
+    window.editV = async (id, o) => { const n = prompt("Nghĩa mới:", o); if(n && n!==o) { await updateDoc(doc(db,"vocab",id), {vie:n}); loadVocab(); } };
+
     window.showTab = (t) => {
-        ['panel-add', 'panel-manage', 'panel-quiz'].forEach(p => document.getElementById(p).classList.add('hidden'));
-        ['t-add', 't-manage', 't-quiz'].forEach(tab => document.getElementById(tab).classList.remove('active'));
-        document.getElementById('panel-' + t).classList.remove('hidden');
-        document.getElementById('t-' + t).classList.add('active');
+        ['panel-add', 'panel-manage', 'panel-quiz'].forEach(p => document.getElementById(p).classList.toggle('hidden', !p.includes(t)));
+        ['t-add', 't-manage', 't-quiz'].forEach(tab => document.getElementById(tab).classList.toggle('active', tab.includes(t)));
         if(t === 'quiz') checkRemaining();
     };
 
@@ -252,9 +245,13 @@
 
     window.startQuiz = () => {
         const rem = vocab.filter(v => !v.mastered);
+        const modeSelect = document.getElementById('quiz-mode-select').value;
+        if(modeSelect === 'choice' && rem.length < 4) return alert("Cần ít nhất 4 từ để chơi trắc nghiệm!");
+        
         const count = parseInt(document.getElementById('quiz-count').value);
         currentQuiz = rem.sort(() => 0.5 - Math.random()).slice(0, count);
-        qIdx = 0; document.getElementById('quiz-setup').classList.add('hidden');
+        qIdx = 0;
+        document.getElementById('quiz-setup').classList.add('hidden');
         document.getElementById('quiz-play').classList.remove('hidden');
         showQ();
     };
@@ -262,29 +259,75 @@
     function showQ() {
         if(qIdx >= currentQuiz.length) { alert("Xong!"); return showTab('quiz'); }
         const curr = currentQuiz[qIdx];
-        isEng = Math.random() < 0.5;
+        const modeSetting = document.getElementById('quiz-mode-select').value;
+        currentQMode = modeSetting === 'mix' ? ['write','choice','listen'][Math.floor(Math.random()*3)] : modeSetting;
+
+        // Reset UI
         document.getElementById('feedback').classList.add('hidden');
         document.getElementById('q-actions').classList.add('hidden');
         document.getElementById('btn-check').classList.remove('hidden');
-        document.getElementById('u-ans').value = ""; document.getElementById('u-ans').disabled = false;
-        document.getElementById('q-hint').innerText = isEng ? "Dịch sang Tiếng Việt:" : "Dịch sang Tiếng Anh:";
-        document.getElementById('q-text').innerText = isEng ? curr.eng : curr.vie;
+        document.getElementById('quiz-input-section').classList.add('hidden');
+        document.getElementById('quiz-choice-section').classList.add('hidden');
+        document.getElementById('u-ans').disabled = false; document.getElementById('u-ans').value = "";
+
+        isEng = Math.random() < 0.5;
         const sBtn = document.getElementById('btn-quiz-speak');
-        if(isEng) { sBtn.classList.remove('hidden'); sBtn.onclick = () => speak(curr.eng); } else sBtn.classList.add('hidden');
-        setTimeout(() => document.getElementById('u-ans').focus(), 100);
+        sBtn.classList.add('hidden');
+
+        if(currentQMode === 'choice') {
+            document.getElementById('quiz-choice-section').classList.remove('hidden');
+            document.getElementById('btn-check').classList.add('hidden');
+            document.getElementById('q-hint').innerText = isEng ? "Nghĩa của từ này là gì?" : "Từ này tiếng Anh là gì?";
+            document.getElementById('q-text').innerText = isEng ? curr.eng : curr.vie;
+            if(isEng) { sBtn.classList.remove('hidden'); sBtn.onclick = () => speak(curr.eng); }
+            generateChoices(curr);
+        } else {
+            document.getElementById('quiz-input-section').classList.remove('hidden');
+            if(currentQMode === 'listen') {
+                document.getElementById('q-hint').innerText = "Nghe và viết lại:";
+                document.getElementById('q-text').innerText = "???";
+                sBtn.classList.remove('hidden'); sBtn.onclick = () => speak(curr.eng);
+                speak(curr.eng);
+            } else {
+                document.getElementById('q-hint').innerText = isEng ? "Dịch sang Tiếng Việt:" : "Dịch sang Tiếng Anh:";
+                document.getElementById('q-text').innerText = isEng ? curr.eng : curr.vie;
+                if(isEng) { sBtn.classList.remove('hidden'); sBtn.onclick = () => speak(curr.eng); }
+            }
+            setTimeout(() => document.getElementById('u-ans').focus(), 150);
+        }
+    }
+
+    function generateChoices(curr) {
+        const area = document.getElementById('quiz-choice-section'); area.innerHTML = '';
+        correctAnsText = isEng ? curr.vie : curr.eng;
+        let opts = [correctAnsText];
+        let others = vocab.filter(v => (isEng ? v.vie : v.eng) !== correctAnsText);
+        others.sort(() => 0.5 - Math.random()).slice(0, 3).forEach(o => opts.push(isEng ? o.vie : o.eng));
+        opts.sort(() => 0.5 - Math.random()).forEach(opt => {
+            const b = document.createElement('button'); b.className = 'choice-btn'; b.innerText = opt;
+            b.onclick = () => {
+                const fb = document.getElementById('feedback'); fb.classList.remove('hidden');
+                if(opt === correctAnsText) { fb.innerText = "CHÍNH XÁC! 🎯"; fb.className = "feedback correct"; }
+                else { fb.innerText = "SAI RỒI! Đáp án: " + correctAnsText; fb.className = "feedback wrong"; }
+                area.querySelectorAll('button').forEach(btn => {
+                    btn.disabled = true;
+                    if(btn.innerText === correctAnsText) btn.style.borderColor = "var(--success)";
+                });
+                document.getElementById('q-actions').classList.remove('hidden');
+            };
+            area.appendChild(b);
+        });
     }
 
     window.checkAns = () => {
-        const uAns = document.getElementById('u-ans');
-        const ans = uAns.value.trim().toLowerCase();
-        if (ans === "") return;
+        const ans = document.getElementById('u-ans').value.trim().toLowerCase();
         const curr = currentQuiz[qIdx];
-        const correct = isEng ? curr.vie.toLowerCase() : curr.eng.toLowerCase();
-        const fb = document.getElementById('feedback');
-        fb.classList.remove('hidden');
+        const correct = currentQMode === 'listen' ? curr.eng.toLowerCase() : (isEng ? curr.vie.toLowerCase() : curr.eng.toLowerCase());
+        const fb = document.getElementById('feedback'); fb.classList.remove('hidden');
         if(ans === correct) { fb.innerText = "CHÍNH XÁC! ✨"; fb.className = "feedback correct"; }
-        else { fb.innerText = "SAI RỒI! Đáp án: " + (isEng ? curr.vie : curr.eng); fb.className = "feedback wrong"; }
-        uAns.disabled = true; document.getElementById('btn-check').classList.add('hidden');
+        else { fb.innerText = "SAI RỒI! Đáp án: " + correct; fb.className = "feedback wrong"; }
+        document.getElementById('u-ans').disabled = true;
+        document.getElementById('btn-check').classList.add('hidden');
         document.getElementById('q-actions').classList.remove('hidden');
     };
 
@@ -294,14 +337,14 @@
     };
 
     window.resetAll = async () => {
-        if(confirm("Reset học lại từ đầu?")) {
+        if(confirm("Học lại từ đầu?")) {
             for(let v of vocab) await updateDoc(doc(db, "vocab", v.id), { mastered: false });
             await loadVocab(); checkRemaining();
         }
     };
 
-    document.getElementById('u-ans').addEventListener('keypress', (e) => {
-        if(e.key === 'Enter' && !document.getElementById('btn-check').classList.contains('hidden')) checkAns();
+    document.addEventListener('keypress', (e) => {
+        if(e.key === 'Enter' && !document.getElementById('btn-check').classList.contains('hidden') && !document.getElementById('quiz-input-section').classList.contains('hidden')) checkAns();
     });
 </script>
 </body>
