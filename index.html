@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocab Master - Random Mode</title>
+    <style>
+        :root { --primary: #2563eb; --success: #16a34a; --danger: #dc2626; --bg: #f1f5f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 20px; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #1e293b; margin-top: 0; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 16px; transition: 0.3s; }
+        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        button { cursor: pointer; border: none; font-weight: bold; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .hidden { display: none; }
+        .auth-tabs { display: flex; background: #e2e8f0; border-radius: 10px; padding: 5px; margin-bottom: 20px; }
+        .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 7px; font-weight: bold; color: #64748b; }
+        .auth-tab.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .tabs { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #64748b; font-weight: 600; }
+        .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
+        .quiz-card { background: #f8fafc; padding: 30px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0; }
+        .question-text { font-size: 32px; font-weight: bold; color: var(--primary); margin-bottom: 10px; }
+        .question-hint { font-size: 14px; color: #64748b; margin-bottom: 20px; font-style: italic; }
+        .feedback { font-weight: bold; margin: 15px 0; padding: 12px; border-radius: 8px; }
+        .feedback.correct { background: #dcfce7; color: var(--success); }
+        .feedback.wrong { background: #fee2e2; color: var(--danger); }
+        .stat-bar { font-size: 14px; color: #64748b; text-align: center; background: #f8fafc; padding: 10px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="auth-screen">
+        <h1>🚀 Vocab Master</h1>
+        <div class="auth-tabs">
+            <div class="auth-tab active" id="btn-login-tab" onclick="switchAuth('login')">Đăng nhập</div>
+            <div class="auth-tab" id="btn-reg-tab" onclick="switchAuth('reg')">Đăng ký</div>
+        </div>
+        <input type="text" id="auth-user" placeholder="Tên đăng nhập">
+        <input type="password" id="auth-pass" placeholder="Mật khẩu">
+        <div id="login-area"><button class="btn-primary" onclick="handleAuth('login')">Vào học ngay</button></div>
+        <div id="reg-area" class="hidden"><button class="btn-success" onclick="handleAuth('reg')">Tạo tài khoản mới</button></div>
+    </div>
+
+    <div id="main-app" class="hidden">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
+            <span id="user-display" style="font-weight: bold; color: var(--primary);"></span>
+            <button style="width: auto; padding: 6px 15px; margin:0; background:#94a3b8; color:white;" onclick="logout()">Đăng xuất</button>
+        </div>
+        <div class="tabs">
+            <div class="tab active" id="tab-add" onclick="showTab('add')">Thêm từ mới</div>
+            <div class="tab" id="tab-quiz" onclick="showTab('quiz')">Kiểm tra</div>
+        </div>
+
+        <div id="panel-add">
+            <input type="text" id="eng-word" placeholder="Tiếng Anh (ví dụ: Persistent)">
+            <input type="text" id="vie-word" placeholder="Tiếng Việt (ví dụ: Kiên trì)">
+            <button class="btn-primary" onclick="addVocab()">➕ Lưu từ vựng</button>
+            <div id="stat-info" class="stat-bar" style="margin-top: 15px;"></div>
+        </div>
+
+        <div id="panel-quiz" class="hidden">
+            <div id="quiz-setup">
+                <h2>🧠 Kiểm tra ngẫu nhiên</h2>
+                <p style="text-align: center; font-size: 14px; color: #64748b;">Hệ thống sẽ tự trộn câu hỏi Anh-Việt và Việt-Anh</p>
+                <label style="font-size: 14px; font-weight: bold;">Số lượng từ:</label>
+                <select id="quiz-count">
+                    <option value="5">5 từ</option>
+                    <option value="10">10 từ</option>
+                    <option value="20">20 từ</option>
+                    <option value="999">Tất cả từ còn lại</option>
+                </select>
+                <button class="btn-success" onclick="startQuiz()">🚀 Bắt đầu ngay</button>
+            </div>
+
+            <div id="quiz-play" class="hidden">
+                <div class="quiz-card">
+                    <div id="quiz-progress" style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;"></div>
+                    <div id="display-hint" class="question-hint"></div>
+                    <div class="question-text" id="display-question"></div>
+                    
+                    <input type="text" id="user-answer" placeholder="Nhập đáp án vào đây..." autocomplete="off">
+                    <div id="feedback-area" class="hidden"></div>
+
+                    <button id="btn-check" class="btn-primary" onclick="checkAnswer()">Kiểm tra</button>
+                    
+                    <div id="next-actions" class="hidden">
+                        <p style="font-size: 14px; margin: 15px 0 10px;">Bạn đã thuộc từ này chưa?</p>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-success" onclick="handleResult(true)">✅ Đã thuộc (Bỏ qua)</button>
+                            <button class="btn-danger" onclick="handleResult(false)">❌ Chưa thuộc (Lặp lại)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button id="btn-reset" class="hidden btn-danger" onclick="resetCycle()">Đã hết từ! Reset để học lại từ đầu</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentUser = null;
+    let vocabData = [];
+    let currentQuizList = [];
+    let currentIdx = 0;
+    let isCurrentEngToVie = true; // Biến lưu hướng dịch của câu hiện tại
+
+    // --- HỆ THỐNG XÁC THỰC ---
+    function switchAuth(mode) {
+        document.getElementById('btn-login-tab').classList.toggle('active', mode === 'login');
+        document.getElementById('btn-reg-tab').classList.toggle('active', mode === 'reg');
+        document.getElementById('login-area').classList.toggle('hidden', mode !== 'login');
+        document.getElementById('reg-area').classList.toggle('hidden', mode !== 'reg');
+    }
+
+    function handleAuth(type) {
+        const u = document.getElementById('auth-user').value.trim();
+        const p = document.getElementById('auth-pass').value.trim();
+        if(!u || !p) return alert("Vui lòng nhập đầy đủ!");
+
+        let users = JSON.parse(localStorage.getItem('vocab_users') || '[]');
+
+        if(type === 'reg') {
+            if(users.some(user => user.u === u)) return alert("Tên này đã tồn tại!");
+            users.push({ u, p });
+            localStorage.setItem('vocab_users', JSON.stringify(users));
+            alert("Đăng ký thành công!");
+            switchAuth('login');
+        } else {
+            const user = users.find(user => user.u === u && user.p === p);
+            if(user) {
+                currentUser = u;
+                loadData();
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('user-display').innerText = "👤 " + u;
+                updateStats();
+            } else { alert("Sai thông tin đăng nhập!"); }
+        }
+    }
+
+    function logout() { location.reload(); }
+
+    // --- QUẢN LÝ DỮ LIỆU ---
+    function loadData() {
+        const saved = localStorage.getItem('data_' + currentUser);
+        vocabData = saved ? JSON.parse(saved) : [];
+    }
+
+    function saveData() {
+        localStorage.setItem('data_' + currentUser, JSON.stringify(vocabData));
+        updateStats();
+    }
+
+    function addVocab() {
+        const eng = document.getElementById('eng-word').value.trim();
+        const vie = document.getElementById('vie-word').value.trim();
+        if(!eng || !vie) return alert("Vui lòng điền đủ!");
+
+        vocabData.push({ eng, vie, mastered: false });
+        saveData();
+        document.getElementById('eng-word').value = '';
+        document.getElementById('vie-word').value = '';
+        document.getElementById('eng-word').focus();
+    }
+
+    function updateStats() {
+        const total = vocabData.length;
+        const mastered = vocabData.filter(v => v.mastered).length;
+        document.getElementById('stat-info').innerText = `📊 Kho: ${total} | Đã thuộc: ${mastered} | Còn lại: ${total - mastered}`;
+    }
+
+    function showTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('panel-add').classList.add('hidden');
+        document.getElementById('panel-quiz').classList.add('hidden');
+        if(tab === 'add') {
+            document.getElementById('tab-add').classList.add('active');
+            document.getElementById('panel-add').classList.remove('hidden');
+        } else {
+            document.getElementById('tab-quiz').classList.add('active');
+            document.getElementById('panel-quiz').classList.remove('hidden');
+            checkRemaining();
+        }
+    }
+
+    // --- LOGIC KIỂM TRA (RANDOM 2 CHIỀU) ---
+    function checkRemaining() {
+        const remaining = vocabData.filter(v => !v.mastered);
+        if(remaining.length === 0 && vocabData.length > 0) {
+            document.getElementById('quiz-setup').classList.add('hidden');
+            document.getElementById('btn-reset').classList.remove('hidden');
+        } else {
+            document.getElementById('quiz-setup').classList.remove('hidden');
+            document.getElementById('btn-reset').classList.add('hidden');
+            document.getElementById('quiz-play').classList.add('hidden');
+        }
+    }
+
+    function startQuiz() {
+        const remaining = vocabData.filter(v => !v.mastered);
+        if(remaining.length === 0) return alert("Chưa có từ mới!");
+
+        const count = parseInt(document.getElementById('quiz-count').value);
+        currentQuizList = remaining.sort(() => 0.5 - Math.random()).slice(0, count);
+        currentIdx = 0;
+        
+        document.getElementById('quiz-setup').classList.add('hidden');
+        document.getElementById('quiz-play').classList.remove('hidden');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        if(currentIdx >= currentQuizList.length) {
+            alert("Xong lượt này!");
+            checkRemaining();
+            return;
+        }
+        const curr = currentQuizList[currentIdx];
+        
+        // NGẪU NHIÊN CHỌN HƯỚNG DỊCH (ANH->VIỆT HOẶC VIỆT->ANH)
+        isCurrentEngToVie = Math.random() < 0.5;
+        
+        document.getElementById('quiz-progress').innerText = `CÂU ${currentIdx + 1} / ${currentQuizList.length}`;
+        document.getElementById('display-hint').innerText = isCurrentEngToVie ? "Hãy dịch sang tiếng Việt:" : "Hãy dịch sang tiếng Anh:";
+        document.getElementById('display-question').innerText = isCurrentEngToVie ? curr.eng : curr.vie;
+        
+        document.getElementById('user-answer').value = '';
+        document.getElementById('user-answer').disabled = false;
+        document.getElementById('user-answer').focus();
+        document.getElementById('feedback-area').classList.add('hidden');
+        document.getElementById('btn-check').classList.remove('hidden');
+        document.getElementById('next-actions').classList.add('hidden');
+    }
+
+    function checkAnswer() {
+        const userAns = document.getElementById('user-answer').value.trim().toLowerCase();
+        const curr = currentQuizList[currentIdx];
+        const correctAns = isCurrentEngToVie ? curr.vie.toLowerCase() : curr.eng.toLowerCase();
+        
+        const feedback = document.getElementById('feedback-area');
+        feedback.classList.remove('hidden');
+        
+        if(userAns === correctAns) {
+            feedback.innerText = "CHÍNH XÁC! 🌟";
+            feedback.className = "feedback correct";
+        } else {
+            const displayAns = isCurrentEngToVie ? curr.vie : curr.eng;
+            feedback.innerText = `SAI RỒI! Đáp án: ${displayAns}`;
+            feedback.className = "feedback wrong";
+        }
+
+        document.getElementById('user-answer').disabled = true;
+        document.getElementById('btn-check').classList.add('hidden');
+        document.getElementById('next-actions').classList.remove('hidden');
+    }
+
+    function handleResult(isMastered) {
+        if(isMastered) {
+            const word = currentQuizList[currentIdx];
+            const realIdx = vocabData.findIndex(v => v.eng === word.eng && v.vie === word.vie);
+            if(realIdx > -1) vocabData[realIdx].mastered = true;
+            saveData();
+        }
+        currentIdx++;
+        showQuestion();
+    }
+
+    function resetCycle() {
+        if(confirm("Học lại từ đầu?")) {
+            vocabData.forEach(v => v.mastered = false);
+            saveData();
+            checkRemaining();
+        }
+    }
+
+    document.getElementById('user-answer').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter' && !document.getElementById('btn-check').classList.contains('hidden')) {
+            checkAnswer();
+        }
+    });
+</script>
+
+</body>
+</html>
