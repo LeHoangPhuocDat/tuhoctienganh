@@ -15,7 +15,7 @@
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; padding: 8px; font-size: 14px; }
         .btn-warning { background: var(--warning); color: white; padding: 8px; font-size: 14px; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         
         /* Tabs */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; overflow-x: auto; }
@@ -37,19 +37,38 @@
         .feedback { font-weight: bold; margin: 15px 0; padding: 12px; border-radius: 8px; }
         .feedback.correct { background: #dcfce7; color: var(--success); }
         .feedback.wrong { background: #fee2e2; color: var(--danger); }
+
+        /* Auth */
+        .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .auth-card { width: 100%; max-width: 400px; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="loader">Đang kết nối Cloud...</div>
+    <div id="loader" style="text-align: center; padding: 50px;">Đang kết nối Cloud...</div>
 
     <div id="auth-screen" class="hidden">
-        <h1>🚀 Vocab Master Pro</h1>
-        <input type="email" id="auth-email" placeholder="Email của bạn">
-        <input type="password" id="auth-pass" placeholder="Mật khẩu">
-        <button class="btn-primary" onclick="handleAuth('login')">Đăng nhập</button>
-        <button style="background:none; color:var(--primary); font-size: 14px;" onclick="handleAuth('reg')">Chưa có tài khoản? Đăng ký ngay</button>
+        <div id="login-box" class="auth-card">
+            <h1 style="text-align: center;">🔐 Đăng nhập</h1>
+            <input type="email" id="login-email" placeholder="Email của bạn">
+            <input type="password" id="login-pass" placeholder="Mật khẩu">
+            <button class="btn-primary" onclick="handleAuth('login')">Vào học ngay</button>
+            <p style="text-align: center; font-size: 14px;">
+                Chưa có tài khoản? <a href="#" onclick="switchAuth('reg')" style="color: var(--primary); font-weight: bold;">Đăng ký tại đây</a>
+            </p>
+        </div>
+
+        <div id="reg-box" class="auth-overlay hidden">
+            <div class="auth-card">
+                <h1 style="text-align: center;">📝 Tạo tài khoản mới</h1>
+                <p style="text-align: center; color: #64748b; font-size: 14px;">Tham gia cộng đồng học tiếng Anh Cloud</p>
+                <input type="email" id="reg-email" placeholder="Nhập Email của bạn">
+                <input type="password" id="reg-pass" placeholder="Tạo mật khẩu (ít nhất 6 ký tự)">
+                <button class="btn-success" onclick="handleAuth('reg')">Hoàn tất đăng ký</button>
+                <button style="background: none; color: #94a3b8; font-size: 14px; width: 100%;" onclick="switchAuth('login')">← Quay lại Đăng nhập</button>
+            </div>
+        </div>
     </div>
 
     <div id="main-app" class="hidden">
@@ -67,14 +86,13 @@
         <div id="panel-add">
             <input type="text" id="eng-word" placeholder="Tiếng Anh (vd: Sustainable)">
             <input type="text" id="vie-word" placeholder="Nghĩa Tiếng Việt">
-            <input type="text" id="cat-word" placeholder="Phân loại (vd: IELTS, Noun, Business...)">
+            <input type="text" id="cat-word" placeholder="Phân loại (vd: IELTS, Business...)">
             <button class="btn-primary" onclick="addVocab()">➕ Lưu từ vựng</button>
         </div>
 
         <div id="panel-manage" class="hidden">
-            <input type="text" id="search-input" class="search-box" placeholder="🔍 Tìm kiếm từ hoặc nghĩa..." oninput="renderVocabList()">
-            <div id="vocab-list-container" style="margin-top: 15px; max-height: 400px; overflow-y: auto;">
-                </div>
+            <input type="text" id="search-input" class="search-box" placeholder="🔍 Tìm từ hoặc nghĩa..." oninput="renderVocabList()">
+            <div id="vocab-list-container" style="margin-top: 15px; max-height: 400px; overflow-y: auto;"></div>
         </div>
 
         <div id="panel-quiz" class="hidden">
@@ -104,7 +122,7 @@
                     </div>
                 </div>
             </div>
-            <button id="btn-reset" class="hidden btn-danger" onclick="resetAll()">Reset toàn bộ vòng lặp</button>
+            <button id="btn-reset" class="hidden btn-danger" onclick="resetAll()">Reset vòng lặp</button>
         </div>
     </div>
 </div>
@@ -133,31 +151,34 @@
     let qIdx = 0;
     let isEng = true;
 
-    // --- PHÁT ÂM (TTS) ---
+    // --- PHÁT ÂM ---
     window.speak = (text) => {
-        window.speechSynthesis.cancel(); // Dừng các âm thanh đang đọc dở
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
         const msg = new SpeechSynthesisUtterance(text);
         msg.lang = 'en-US';
-        msg.rate = 0.9; // Tốc độ đọc vừa phải
+        msg.rate = 0.9;
         window.speechSynthesis.speak(msg);
+        let r = setInterval(() => {
+            if (!window.speechSynthesis.speaking) clearInterval(r);
+            else window.speechSynthesis.resume();
+        }, 10000);
     };
 
     // --- AUTH ---
+    window.switchAuth = (mode) => {
+        document.getElementById('reg-box').classList.toggle('hidden', mode !== 'reg');
+    };
+
     window.handleAuth = async (type) => {
-        const email = document.getElementById('auth-email').value.trim(); // Thêm .trim() vào đây
-        const pass = document.getElementById('auth-pass').value.trim();  // Thêm .trim() vào đây
-        
-        if (!email.includes('@')) {
-            alert("Vui lòng nhập đúng định dạng email (ví dụ: name@gmail.com)");
-            return;
-        }
-        
+        const email = type === 'login' ? document.getElementById('login-email').value.trim() : document.getElementById('reg-email').value.trim();
+        const pass = type === 'login' ? document.getElementById('login-pass').value.trim() : document.getElementById('reg-pass').value.trim();
+        if (!email.includes('@')) return alert("Email không hợp lệ!");
+        if (pass.length < 6) return alert("Mật khẩu ít nhất 6 ký tự!");
         try {
             if(type === 'login') await signInWithEmailAndPassword(auth, email, pass);
-            else await createUserWithEmailAndPassword(auth, email, pass);
-        } catch (e) { 
-            alert("Lỗi Firebase: " + e.message); 
-        }
+            else { await createUserWithEmailAndPassword(auth, email, pass); alert("Đăng ký thành công!"); }
+        } catch (e) { alert("Lỗi: " + e.message); }
     };
 
     window.logout = () => signOut(auth);
@@ -176,7 +197,7 @@
         }
     });
 
-    // --- QUẢN LÝ TỪ VỰNG ---
+    // --- DỮ LIỆU ---
     async function loadVocab() {
         const q = query(collection(db, "vocab"), where("uid", "==", user.uid));
         const snap = await getDocs(q);
@@ -188,69 +209,36 @@
         const eng = document.getElementById('eng-word').value.trim();
         const vie = document.getElementById('vie-word').value.trim();
         const cat = document.getElementById('cat-word').value.trim() || "Chung";
-        if(!eng || !vie) return alert("Vui lòng nhập đủ từ và nghĩa!");
-        
-        await addDoc(collection(db, "vocab"), { 
-            uid: user.uid, eng, vie, category: cat, mastered: false, createdAt: Date.now() 
-        });
-        
-        document.getElementById('eng-word').value = '';
-        document.getElementById('vie-word').value = '';
-        await loadVocab();
-        alert("Đã lưu!");
+        if(!eng || !vie) return alert("Vui lòng nhập đủ!");
+        await addDoc(collection(db, "vocab"), { uid: user.uid, eng, vie, category: cat, mastered: false, createdAt: Date.now() });
+        document.getElementById('eng-word').value = ''; document.getElementById('vie-word').value = '';
+        await loadVocab(); alert("Đã lưu!");
     };
 
-    window.deleteVocab = async (id) => {
-        if(confirm("Bạn có chắc chắn muốn xoá từ này?")) {
-            await deleteDoc(doc(db, "vocab", id));
-            await loadVocab();
-        }
-    };
+    window.deleteVocab = async (id) => { if(confirm("Xoá từ này?")) { await deleteDoc(doc(db, "vocab", id)); await loadVocab(); } };
 
     window.editVocab = async (id, oldVie) => {
-        const newVie = prompt("Sửa nghĩa Tiếng Việt:", oldVie);
-        if(newVie && newVie !== oldVie) {
-            await updateDoc(doc(db, "vocab", id), { vie: newVie });
-            await loadVocab();
-        }
+        const newVie = prompt("Sửa nghĩa:", oldVie);
+        if(newVie && newVie !== oldVie) { await updateDoc(doc(db, "vocab", id), { vie: newVie }); await loadVocab(); }
     };
 
     window.renderVocabList = () => {
         const search = document.getElementById('search-input').value.toLowerCase();
         const container = document.getElementById('vocab-list-container');
         container.innerHTML = '';
-
-        const filtered = vocab.filter(v => 
-            v.eng.toLowerCase().includes(search) || 
-            v.vie.toLowerCase().includes(search) ||
-            (v.category && v.category.toLowerCase().includes(search))
-        ).sort((a,b) => b.createdAt - a.createdAt);
-
-        filtered.forEach(v => {
-            const div = document.createElement('div');
-            div.className = 'vocab-item';
-            div.innerHTML = `
-                <div>
-                    <b>${v.eng}</b> <span class="vocab-tag">${v.category || 'Chung'}</span>
-                    <button class="btn-speak" onclick="speak('${v.eng}')">🔊</button>
-                    <br><small>${v.vie}</small>
-                </div>
-                <div class="action-group">
-                    <button class="btn-warning" onclick="editVocab('${v.id}', '${v.vie}')">Sửa</button>
-                    <button class="btn-danger" onclick="deleteVocab('${v.id}')">Xoá</button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
+        vocab.filter(v => v.eng.toLowerCase().includes(search) || v.vie.toLowerCase().includes(search))
+             .forEach(v => {
+                const div = document.createElement('div'); div.className = 'vocab-item';
+                div.innerHTML = `<div><b>${v.eng}</b> <span class="vocab-tag">${v.category}</span><button class="btn-speak" onclick="speak('${v.eng}')">🔊</button><br><small>${v.vie}</small></div>
+                                 <div class="action-group"><button class="btn-warning" onclick="editVocab('${v.id}', '${v.vie}')">Sửa</button><button class="btn-danger" onclick="deleteVocab('${v.id}')">Xoá</button></div>`;
+                container.appendChild(div);
+             });
     };
 
-    // --- TABS & QUIZ ---
+    // --- QUIZ ---
     window.showTab = (t) => {
-        const panels = ['panel-add', 'panel-manage', 'panel-quiz'];
-        const tabs = ['t-add', 't-manage', 't-quiz'];
-        panels.forEach(p => document.getElementById(p).classList.add('hidden'));
-        tabs.forEach(tab => document.getElementById(tab).classList.remove('active'));
-        
+        ['panel-add', 'panel-manage', 'panel-quiz'].forEach(p => document.getElementById(p).classList.add('hidden'));
+        ['t-add', 't-manage', 't-quiz'].forEach(tab => document.getElementById(tab).classList.remove('active'));
         document.getElementById('panel-' + t).classList.remove('hidden');
         document.getElementById('t-' + t).classList.add('active');
         if(t === 'quiz') checkRemaining();
@@ -266,123 +254,54 @@
         const rem = vocab.filter(v => !v.mastered);
         const count = parseInt(document.getElementById('quiz-count').value);
         currentQuiz = rem.sort(() => 0.5 - Math.random()).slice(0, count);
-        qIdx = 0;
-        document.getElementById('quiz-setup').classList.add('hidden');
+        qIdx = 0; document.getElementById('quiz-setup').classList.add('hidden');
         document.getElementById('quiz-play').classList.remove('hidden');
         showQ();
     };
 
     function showQ() {
-        // 1. Kiểm tra nếu hết câu hỏi
-        if(qIdx >= currentQuiz.length) { 
-            alert("Tuyệt vời! Bạn đã hoàn thành lượt kiểm tra."); 
-            return showTab('quiz'); 
-        }
-
-        // 2. Reset TOÀN BỘ giao diện về trạng thái ban đầu
-        const feedback = document.getElementById('feedback');
-        const qActions = document.getElementById('q-actions');
-        const btnCheck = document.getElementById('btn-check');
-        const uAns = document.getElementById('u-ans');
-
-        // Ẩn kết quả và nút thuộc/chưa thuộc, hiện lại nút Kiểm tra
-        feedback.classList.add('hidden');
-        feedback.innerText = ""; // Xóa chữ cũ
-        qActions.classList.add('hidden');
-        btnCheck.classList.remove('hidden');
-
-        // Xóa trắng ô nhập liệu và cho phép nhập lại
-        uAns.value = "";
-        uAns.disabled = false;
-
-        // 3. Nạp dữ liệu câu hỏi mới
+        if(qIdx >= currentQuiz.length) { alert("Xong!"); return showTab('quiz'); }
         const curr = currentQuiz[qIdx];
         isEng = Math.random() < 0.5;
-        
+        document.getElementById('feedback').classList.add('hidden');
+        document.getElementById('q-actions').classList.add('hidden');
+        document.getElementById('btn-check').classList.remove('hidden');
+        document.getElementById('u-ans').value = ""; document.getElementById('u-ans').disabled = false;
         document.getElementById('q-hint').innerText = isEng ? "Dịch sang Tiếng Việt:" : "Dịch sang Tiếng Anh:";
         document.getElementById('q-text').innerText = isEng ? curr.eng : curr.vie;
-        
-        // Xử lý nút loa
-        const speakBtn = document.getElementById('btn-quiz-speak');
-        if(isEng) {
-            speakBtn.classList.remove('hidden');
-            speakBtn.onclick = () => speak(curr.eng);
-        } else {
-            speakBtn.classList.add('hidden');
-        }
-
-        // Tự động nhảy vào ô nhập liệu để gõ luôn
-        setTimeout(() => uAns.focus(), 100);
+        const sBtn = document.getElementById('btn-quiz-speak');
+        if(isEng) { sBtn.classList.remove('hidden'); sBtn.onclick = () => speak(curr.eng); } else sBtn.classList.add('hidden');
+        setTimeout(() => document.getElementById('u-ans').focus(), 100);
     }
 
     window.checkAns = () => {
         const uAns = document.getElementById('u-ans');
         const ans = uAns.value.trim().toLowerCase();
-        
-        // Nếu chưa nhập gì thì không làm gì cả
         if (ans === "") return;
-
-        const curr = currentQuiz[qIdx];
-        const correct = isEng ? curr.vie.toLowerCase() : curr.eng.toLowerCase();
-        const fb = document.getElementById('feedback');
-        
-        fb.classList.remove('hidden');
-        
-        if(ans === correct) {
-            fb.innerText = "CHÍNH XÁC! ✨";
-            fb.className = "feedback correct";
-        } else {
-            fb.innerText = "SAI RỒI! Đáp án đúng: " + (isEng ? curr.vie : curr.eng);
-            fb.className = "feedback wrong";
-        }
-
-        // Khóa ô nhập và đổi nút
-        uAns.disabled = true;
-        document.getElementById('btn-check').classList.add('hidden');
-        document.getElementById('q-actions').classList.remove('hidden');
-    };
-
-    window.checkAns = () => {
-        const ans = document.getElementById('u-ans').value.trim().toLowerCase();
         const curr = currentQuiz[qIdx];
         const correct = isEng ? curr.vie.toLowerCase() : curr.eng.toLowerCase();
         const fb = document.getElementById('feedback');
         fb.classList.remove('hidden');
-        
-        if(ans === correct) {
-            fb.innerText = "CHÍNH XÁC! ✨";
-            fb.className = "feedback correct";
-        } else {
-            fb.innerText = "SAI RỒI! Đáp án đúng: " + (isEng ? curr.vie : curr.eng);
-            fb.className = "feedback wrong";
-        }
-        document.getElementById('btn-check').classList.add('hidden');
+        if(ans === correct) { fb.innerText = "CHÍNH XÁC! ✨"; fb.className = "feedback correct"; }
+        else { fb.innerText = "SAI RỒI! Đáp án: " + (isEng ? curr.vie : curr.eng); fb.className = "feedback wrong"; }
+        uAns.disabled = true; document.getElementById('btn-check').classList.add('hidden');
         document.getElementById('q-actions').classList.remove('hidden');
     };
 
     window.updateMastered = async (m) => {
-        if(m) {
-            const vDoc = doc(db, "vocab", currentQuiz[qIdx].id);
-            await updateDoc(vDoc, { mastered: true });
-            await loadVocab();
-        }
+        if(m) { await updateDoc(doc(db, "vocab", currentQuiz[qIdx].id), { mastered: true }); await loadVocab(); }
         qIdx++; showQ();
     };
 
     window.resetAll = async () => {
-        if(confirm("Bạn muốn reset toàn bộ kho từ để học lại từ đầu?")) {
-            for(let v of vocab) {
-                await updateDoc(doc(db, "vocab", v.id), { mastered: false });
-            }
+        if(confirm("Reset học lại từ đầu?")) {
+            for(let v of vocab) await updateDoc(doc(db, "vocab", v.id), { mastered: false });
             await loadVocab(); checkRemaining();
         }
     };
-    
-    // Hỗ trợ phím Enter khi làm Quiz
+
     document.getElementById('u-ans').addEventListener('keypress', (e) => {
-        if(e.key === 'Enter') {
-            if(!document.getElementById('btn-check').classList.contains('hidden')) checkAns();
-        }
+        if(e.key === 'Enter' && !document.getElementById('btn-check').classList.contains('hidden')) checkAns();
     });
 </script>
 </body>
